@@ -1,0 +1,354 @@
+Here are four concise and impactful card texts for your website:
+
+1. "Seamless Drawing Tools"
+
+"Explore brushes, colors, and layers designed for precision and ease."
+
+
+
+2. "Undo & Redo Functionality"
+
+"Experiment fearlessly with instant control over every stroke."
+
+
+
+3. "Customizable Canvas"
+
+"Tailor your canvas size and style to fit your creative vision."
+
+
+
+4. "Save & Share Your Art"
+
+"Download your masterpiece or share it with the world in seconds."
+
+
+
+
+
+
+
+
+
+
+
+
+
+Menu Icon
+Github Icon
+Github
+Close Icon
+Installation
+Initialization
+Methods
+Demos
+Support
+ScrollJs Icon
+ScrollJs
+Easy scroll triggered animation library
+ScrollJs is a lightweight and easy to use javascript library that allows you to add scroll triggered animations (AOS) with optional callback functions and also lazy load your images to make your website more optimize.
+
+While other scroll triggered animation library offer predefined animation classes not giving full control and how you want your animations to display, ScrollJs allows you to use your already styled animation class.
+
+Installation
+- Use via cdn link
+Paste the code below in between the head tag in your html code
+
+- HTML
+
+         <script src="https://cdn.jsdelivr.net/gh/Charmingdc/ScrollJs@main/scroll.min.js"></script>
+        
+- Download the file
+Click here to download the javascript file from Github and place it in your project folder to start using scrollJs.
+
+Initialization
+Simply add the following javascript code to Initialize scrollJs
+
+- JS
+
+         
+          const observer = new ScrollObserver()
+           
+           
+            // here "observer" can be any variable name you prefer
+           
+           
+        
+- Optional parameters
+animateOnce (boolean) : This is the first parameter that ScrollObserver() can take in. By default it is set to false, i.e elements that are being observe should always animate whenever they enter the viewport, if set to true, elements being observe will only animate the first time they enter the viewport. To set the parameter:
+
+- JS
+
+        
+          const observer = new ScrollObserver(boolean)
+           
+           
+            // here replace "boolean" with either true or false
+           
+           
+          
+observer options (object) : This is the second parameter you can pass in when you Initialize ScrollObserver(). It takes in your custom settings for the .observe() method as key-value pairs allowing you to set custom root, threshold, and rootMargin. To set this parameter, the first parameter must be set i.e the animateOnce (boolean).
+
+- JS
+
+          
+          const rootDiv =  document.querySelector('.your-container');
+          
+          
+          const observer = new ScrollObserver(false, {
+            root: rootDiv, 
+            threshold: 0.8,
+            rootMargin: '-10px',
+           });
+           
+           
+            //Note: all observer options are optional
+            
+            // root: to set a use a custom container height as the viewport for the animations to trigger. set value to "null" to use default viewport
+            
+            //threshold specifies how much of the body the elements you are observing should be visible for the animation to trigger.
+            
+            //rootMargin to shrink your viewport height.
+           
+           
+          
+The table below shows the "observer options" name, type, default value, minimum and maximum values.
+
+
+NAME	TYPE	DEFAULT	MIN	MAX
+root	element	brower viewport	~	~
+threshold	number	0.8	0	0.8
+rootMargin	string	-10px	-80px	80px
+Info Icon
+Note
+When threshold is set up to 0.8, rootMargin must be between the range of '-10px' to '10px' and when rootMargin is upto '-70px' or '70px', threshold must not be more than 0.2 else your elements may not animate/show on scroll.
+
+Methods
+ScrollJs has three main methods, .observe(), .unobserve(), .disconnect()
+
+
+.observe();
+This method is use to observe elements position on the page and add an animation when the element being observed enter or leave the viewport.
+
+- JS
+
+        
+          observer.observe(element, callback, animationClass);
+           
+          
+           // whenever you see "observer" replace it with the variable name you used when you initializated scrollJs
+          
+           
+       
+
+The table below shows the parameters name, type and whether it is neccesary.
+
+
+NAME	TYPE	OPTIONAL
+element	element	No
+callback	function	Yes
+animationClass	string	No
+
+
+- The .observe() method can be called multiple times, to observe elements with different clases/id's and add different animations to trigger when the elements enter the viewport.
+
+- JS
+
+          
+          const firstDiv =  document.querySelector('.first-div');
+          
+          const secDiv =  document.querySelectorAll('#sec-div');
+          
+          observer.observe(firstDiv, null, 'fadeinLeft');
+          
+          observer.observe(secDiv, null, 'zoomIn');
+           
+          
+           // the observe() method is called two times to apply different animations to different elements when they enter the viewport.
+          
+           
+       
+
+
+- The first parameter (element) can also take in multiple elements with the same class name
+
+- JS
+
+          
+          const yourDivs =  document.querySelectorAll('.your-divs');
+          
+          observer.observe(yourDivs, null, 'fadein');
+           
+          
+           // callback is set to null because we are not setting any function to trigger when the elements scroll into the viewport
+          
+           
+       
+
+
+- Lazy loading images with .observe(); method
+
+By setting a function for the callback parameter you can lazy load images resulting in more optimize websites.
+
+- JS
+
+          
+           // get your image
+         
+         const image =  document.querySelector('.your-img[data-src]');
+         
+          observer.observe(image,  (img) => {
+  img.src = img.dataset.src;},  'visible');
+           
+          
+           // note that "visible" is a style class in my css file to make the image show up when it comes into the viewport
+           
+           // the callback function load the image
+          
+           
+       
+Info Icon
+Note
+set callback to null if no callback function is set, e.g observer.observe(element, null, 'show');
+
+
+
+
+.unobserve();
+.unobserve() method only accept one parameter which is/are the element/elments to stop observing
+
+
+The .unobserve() method is useful when you want to unobserve a single element among different elements with the same class name that is currently being observe.
+
+- JS
+
+        
+          observer.unobserve(element);
+           
+          
+           // accept one parameter which is the element to unobserve
+          
+           
+       
+
+use case:
+
+- JS
+
+          
+          const allDivs =  document.querySelectorAll('.all-divs');
+          // get all divs (elements) with the same class name
+          
+          const specialDiv =  document.querySelector('#special-div');
+           // select one of the divs (elements) with a special ID
+          
+          
+          observer.observe(allDivs, null, 'fadeinLeft');
+          // call the .observe() method on all the divs (elements)
+          
+          
+          
+          observer.unobserve(specialDiv);
+          // unobserve one of the divs (elements) 
+          
+           
+       
+
+
+
+
+.disconnect();
+The .disconnect() method stops ScrollObserver from tracking all currently observed elements. Once this method is called, the observer will no longer trigger any callbacks or apply animations for the elements it was previously observing.
+
+
+After calling .disconnect(), the observer is effectively reset and no longer tracks any elements. To resume observing elements, you must explicitly call the .observe() method again and pass the elements you wish to track
+
+- JS
+
+        
+          observer.disconnect();
+           
+          
+           // the .disconnect() method does not take in any parameter
+          
+           
+       
+
+Use case:
+
+- JS
+
+          
+          const firstDiv =  document.querySelector('.first-div');
+          
+          const secDiv =  document.querySelectorAll('.sec-div');
+          
+          observer.observe(firstDiv, null, 'fadeinLeft');
+          
+          observer.observe(secDiv, null, 'zoomIn');
+           
+           observer.disconnect();
+           
+          
+           // used to stop all current observers
+          
+           
+       
+All the .observe() method won't observe the elements unless they are explicitly re-observed after the disconnect() method
+
+Demo
+Demo usage of all the methods for you to experiment with.
+
+
+If the result of any of the CodePens didn't show up, simply tap the Rerun button.
+
+
+
+
+.observe() method
+Here is a demo of using the .observe() method with the default parameters
+
+
+
+
+Another demo using the .observe() method, but setting the animateOnce parameter to true when initializating ScrollObserver()
+
+
+
+
+
+.unobserve() method
+A demo usage of the .unobserve() method, here the fifth card won't display. Check the javascript tab for more info.
+
+
+
+
+
+.disconnect() method
+The .disconnect() method simply clear all current observers and make them stop observing any elements that are being observed before.
+
+
+Simply call the .disconnect() method without any parameter to stop all observers from observing the current elements they are observing.
+
+- JS
+
+           
+           observer.disconnect();
+           
+          
+           // used to stop all current observers
+          
+           
+       
+Support the project
+If you like scrollJs, please consider Supporting the project by giving it a star on Github.
+
+
+Installation
+Initialization
+Methods
+Demos
+Github
+
+Developed with '♥️' by Adebayo Muis
+(Charmingdc)

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="shortcut icon" href="DrawnetLogo.png">
+    <title>Drawing Pad</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            font-family: 'Afacad Flux', sans-serif;
+            height: 100%;
+            overflow-x: hidden;
+            color: #fafafa;
+            background-color: #282928;
+        }
+
+        .load-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #282928;
+            position: relative;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .loading-circle {
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #03befc;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #mainContent {
+            display: none;
+            background: #fff;
+            text-align: center;
+            padding: 20px;
+            height: 100%; /* Allow height to adjust based on content */
+        }
+
+        h1 {
+            color: #03befc;
+        }
+
+        .loading-text {
+            padding-top: 15px;
+        }
+
+        #drawingCanvas {
+            box-shadow: 2px 2px 3px 3px grey;
+            cursor: crosshair;
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 800px; /* Max width for larger screens */
+            height: calc(100% - 10px); /* Fixed height */
+            border-radius: 2px;
+              -webkit-font-smoothing: antialiased;
+  image-rendering: auto; /* Default smooth scaling */
+  display: block; /* Avoid extra borders/margins */
+        }
+        #toolbar {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 15px;
+        }
+
+        #brushSize {
+            width: 100px; /* Fixed width for brush size */
+        }
+
+        .toolbar-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px; 
+        }
+
+        .button-icon {
+            border: none;
+            background: transparent; 
+            cursor: pointer; 
+            color: #03befc; 
+            font-size: 24px; 
+        }
+
+        #brushSizeValue {
+            margin-left: 10px; 
+            color: #000; 
+        }
+        #textInput{
+          border:2px dotted grey;
+          outline:none;
+          font-family: 'Afacad Flux', sans-serif;
+          padding:5px;
+          width:100px;
+          background-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+          #drawingCanvas {
+              height: calc(100% - 50px); /* Adjust canvas height for smaller screens */
+          }
+
+          .button-icon {
+              font-size: 20px; /* Smaller icons on mobile */
+          }
+          
+          #brushSizeValue {
+              font-size: 14px; /* Smaller brush size text */
+          }
+      }
+
+      @media (max-width: 480px) {
+          #drawingCanvas {
+              height: calc(100% - 230px); /* Further adjust canvas height for very small screens */
+          }
+
+          .button-icon {
+              font-size: 18px; /* Even smaller icons on very small screens */
+          }
+          
+          #brushSizeValue {
+              font-size: 12px; /* Further reduce brush size text */
+          }
+      }
+    </style>
+</head>
+<body>
+
+    <div class="load-container">
+        <div class="loading-circle"></div>
+        <p class="loading-text" id="loadingText">loading tools.</p>
+    </div>
+
+    <div id="mainContent">
+        <div class="toolbar-buttons">
+            <button class="button-icon" id="undoButton" title="Undo">
+                <i class="fas fa-undo"></i>
+            </button>
+            <button class="button-icon" id="redoButton" title="Redo">
+                <i class="fas fa-redo"></i>
+            </button>
+           <button class="button-icon" id="saveButton" title="Save Drawing">
+                <i class="fas fa-save"></i>
+           </button>
+           <button class="button-icon" id="eraserButton" title="Eraser">
+                <i class="fas fa-eraser"></i>
+           </button>
+       </div>
+
+       <canvas id="drawingCanvas"></canvas>
+      <input type="text" id="textInput" style="display: none; position: absolute; z-index: 100;" />
+       <div id="toolbar">
+           <div id="colorPicker"></div>
+           <div>
+               <label for="brushSize">Brush Size:</label>
+               <input type="range" id="brushSize" min="1" max="20" value="5">
+               <span id="brushSizeValue">5</span>
+           </div>
+           <button class="button-icon" id="textButton" title="Add Text">
+    <i class="fas fa-font"></i>
+</button>
+       </div>
+   </div>
+
+   <script>
+       var loadContainer = document.querySelector('.load-container');
+       var content = document.getElementById('mainContent');
+       var loadingText = document.getElementById('loadingText');
+
+       let dots = 0;
+       let maxDots = 3;
+
+       setInterval(() => {
+           dots = (dots + 1) % (maxDots + 1);
+           loadingText.textContent = 'loading tools' + '.'.repeat(dots);
+       }, 500);
+
+       let randomLoadingTime = Math.floor(Math.random() * (7000 - 4000 + 1)) + 4000;
+
+       setTimeout(() => {
+           loadContainer.style.display = 'none';
+           content.style.display = 'block';
+           initDrawingPad();
+       }, randomLoadingTime);
+   </script>
+
+   <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5.5.2/dist/iro.min.js"></script>
+
+ <script>
+    function initDrawingPad() {
+  const canvas = document.getElementById('drawingCanvas');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = canvas.clientWidth * window.devicePixelRatio; // Responsive width
+  canvas.height = canvas.clientHeight * window.devicePixelRatio; // Responsive height
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.imageSmoothingEnabled = false;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  let drawing = false;
+  let isErasing = false;
+  let isTextMode = false; // To toggle text input mode
+  const textInput = document.getElementById('textInput');
+
+  let undoStack = [];
+  let redoStack = [];
+
+  const saveState = () => {
+    undoStack.push(canvas.toDataURL());
+    redoStack = [];
+  };
+
+  function handleText(e) {
+    if (!isTextMode) return;
+
+    const { offsetX, offsetY } = getEventPosition(e);
+
+    // Display input at the clicked position
+    textInput.style.left = `${offsetX}px`;
+    textInput.style.top = `${offsetY +70}px`;
+    textInput.style.display = 'block';
+    textInput.value = ""; // Clear previous input
+    textInput.focus(); // Focus to bring up the keyboard on mobile
+
+    // Handle Enter key press
+    textInput.onkeydown = function(event) {
+      if (event.key === "Enter") {
+        const text = textInput.value.trim();
+        if (text) {
+          ctx.font = "20px 'Afacad Flux', sans-serif";
+          ctx.fillStyle = '#000'; // Change color if needed
+          ctx.fillText(text, offsetX, offsetY + 20);
+          saveState(); // Save the state after adding text
+        }
+        textInput.style.display = 'none'; // Hide input box after adding text
+        isTextMode = false; // Disable text mode after adding text
+      }
+    };
+  }
+
+  // Add event listener for the Text button
+  document.getElementById('textButton').addEventListener('click', function() {
+    isTextMode = !isTextMode; // Toggle text mode
+    if (isTextMode) {
+      alert('Click on the canvas to add a text box.');
+      textInput.style.display = 'none'; // Ensure it's hidden initially
+    } else {
+      textInput.style.display = 'none'; // Hide when exiting text mode
+    }
+  });
+
+  // Detect mouse/touch position for text input
+  canvas.addEventListener('click', handleText);
+  canvas.addEventListener('touchstart', handleText);
+
+  const startDrawing = (e) => {
+    drawing = true;
+    ctx.beginPath();
+    const { offsetX, offsetY } = getEventPosition(e);
+    ctx.moveTo(offsetX, offsetY);
+    saveState();
+  };
+
+  const draw = (e) => {
+    if (drawing) {
+      const { offsetX, offsetY } = getEventPosition(e);
+      ctx.lineTo(offsetX, offsetY);
+      ctx.stroke();
+    }
+  };
+
+  const stopDrawing = () => {
+    drawing = false;
+    ctx.closePath();
+  };
+
+  const getEventPosition = (e) => {
+    if (e.touches) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        offsetX: e.touches[0].clientX - rect.left,
+        offsetY: e.touches[0].clientY - rect.top,
+      };
+    } else {
+      return {
+        offsetX: e.offsetX,
+        offsetY: e.offsetY,
+      };
+    }
+  };
+
+  // Undo function
+  const undo = () => {
+    if (undoStack.length > 0) {
+      const previousState = undoStack.pop();
+      redoStack.push(canvas.toDataURL());
+      let img = new Image();
+      img.src = previousState;
+
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+      };
+    }
+  };
+
+  // Redo function
+  const redo = () => {
+    if (redoStack.length > 0) {
+      const nextState = redoStack.pop();
+      undoStack.push(canvas.toDataURL());
+      let img = new Image();
+      img.src = nextState;
+
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+      };
+    }
+  };
+
+  // Event listeners for undo and redo
+  document.getElementById('undoButton').addEventListener('click', undo);
+  document.getElementById('redoButton').addEventListener('click', redo);
+
+  // Save button functionality
+  const saveButton = document.getElementById('saveButton');
+
+  saveButton.addEventListener('click', function() {
+    let fileName = prompt("Enter a name for your drawing:", "myDrawing");
+
+    if (fileName) {
+      const link = document.createElement('a');
+      link.download = fileName + '.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+  });
+
+  // Color picker
+  const colorPicker = new iro.ColorPicker("#colorPicker", {
+    width: 100,
+    color: "#03befc"
+  });
+
+  colorPicker.on('color:change', function(color) {
+    if (!isErasing) {
+      ctx.strokeStyle = color.hexString; // Update stroke color
+    }
+  });
+
+  // Brush size control
+  const brushSizeInput = document.getElementById('brushSize');
+  const brushSizeValue = document.getElementById('brushSizeValue');
+
+  brushSizeInput.addEventListener('input', function() {
+    ctx.lineWidth = this.value; // Update line width
+    brushSizeValue.innerHTML = this.value; // Display current brush size
+  });
+
+  // Eraser functionality
+  document.getElementById('eraserButton').addEventListener('click', function() {
+    isErasing = !isErasing; // Toggle eraser mode
+    ctx.strokeStyle = isErasing ? '#FFFFFF' : colorPicker.color.hexString; // Set stroke color based on mode
+  });
+
+  // Event listeners for drawing
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+
+  // Touch events for mobile
+  canvas.addEventListener('touchstart', startDrawing);
+  canvas.addEventListener('touchmove', draw);
+  canvas.addEventListener('touchend', stopDrawing);
+}
+</script>
+</body>
+</html>
